@@ -1,0 +1,46 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/erik/**)",
+      "Bash(git log --oneline -20)",
+      "Bash(git status --short)",
+      "Bash(git diff --stat)",
+      "Bash(git diff --name-only HEAD)",
+      "Bash(flake8 --version)",
+      "Bash(flake8 *)",
+      "Bash(python3 -m flake8 --version)",
+      "Bash(pip show *)",
+      "Bash(pip3 show *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/session-start.sh",
+            "statusMessage": "git pull..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/flake8-hook.sh",
+            "statusMessage": "flake8..."
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  },
+  "theme": "dark"
+}

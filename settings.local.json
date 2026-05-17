@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//usr/share/applications/**)",
+      "Read(//etc/skel/.config/**)",
+      "Read(//usr/bin/**)"
+    ]
+  }
+}
