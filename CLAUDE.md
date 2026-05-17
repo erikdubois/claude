@@ -1,9 +1,38 @@
 # Global Claude Instructions
 
 ## Who I am
+
 Erik — Arch Linux developer building Kiro, a full Arch-based Linux distro with its own package repo (`nemesis_repo`). Primary app: archlinux-tweak-tool (ATT), a large modular GTK4 Python system tool. Also: custom Linux ISOs, shell automation.
 
+## This Repository
+
+This folder (`~/EDU/claude`) is the **bootstrap source** for Claude Code config. It is not an application — it distributes config to `~/.claude/` and accepts changes back from it.
+
+**Two-way sync:**
+
+- repo → `~/.claude/` via [bootstrap.sh](bootstrap.sh) (manual, on new machines)
+- `~/.claude/` → repo via [sync-bootstrap.sh](sync-bootstrap.sh) (auto-run by the SessionStart hook; auto-commits if anything changed)
+
+**Common commands:**
+
+| Command | What it does |
+| --- | --- |
+| `./bootstrap.sh` | Install repo contents to `~/.claude/` (pacman/AUR deps, hooks, skills, best_practices) |
+| `./bootstrap.sh --project /path` | Bootstrap + seed `.claude/memory/`, `CLAUDE.md`, `CHANGELOG.md`, `IDEAS.md` in a project |
+| `bash sync-bootstrap.sh` | Pull live `~/.claude/` state into repo; commits if anything differs |
+| `./up.sh` | git pull → clean `__pycache__` → run optional `chaotic.sh`/`repo.sh` → add/commit/push |
+| `./setup.sh` | Configure git identity + remote based on path (`EDU` → erikdubois, `KIRO` → kirodubes) |
+
+**Editing gotchas:**
+
+- [CLAUDE.md](CLAUDE.md) here *is* the file that gets installed globally — edits propagate to every machine that re-runs bootstrap.
+- [settings.json](settings.json) here is a clean generic template; the live `~/.claude/settings.json` is **deliberately not synced back** ([sync-bootstrap.sh:20-22](sync-bootstrap.sh#L20-L22)) because it contains project-specific allow rules.
+- [best_practices.md](best_practices.md) is auto-sanitized on sync (paths/usernames stripped via sed in [sync-bootstrap.sh:51-55](sync-bootstrap.sh#L51-L55)) — don't hand-edit identifiers back in.
+- Hook scripts are installed to *two* locations by bootstrap (`~/.claude/hooks/` + flat `~/.claude/`) for backwards compat with the `settings.json` reference paths — [bootstrap.sh:117-120](bootstrap.sh#L117-L120).
+- [memory/](memory/) holds the *universal* subset of feedback rules — only files that already exist here are refreshed from `~/.claude/projects/-home-erik/memory/` by sync; new rules must be added to this repo manually before they will start syncing.
+
 ## Environment
+
 - OS: Arch Linux - dwm - chadwm - ohmychadwm
 - Shell: fish (default), bash for scripts
 - Languages: Python, bash, shell
@@ -11,12 +40,14 @@ Erik — Arch Linux developer building Kiro, a full Arch-based Linux distro with
 - Terminal: Alacritty
 
 ## Communication
+
 - No emojis unless I ask
 - Concise responses; no trailing "here's what I did" summaries
 - Use markdown links for file references (clickable in VSCode), not backticks
 - When I ask an exploratory question, give me a recommendation + the main tradeoff in 2–3 sentences — don't implement until I confirm
 
 ## Code style
+
 - Remove inline comments that only restate a single line of code; keep comments that explain WHY
 - Section dividers (`# ── Name ──────`) are kept in long functions (50+ lines) where they aid navigation; don't add them to short functions
 - Docstrings follow PEP 257: public functions/methods/modules should have a one-line docstring; private functions (prefixed `_`) do not require them; never write multi-paragraph docstrings
@@ -28,6 +59,7 @@ Erik — Arch Linux developer building Kiro, a full Arch-based Linux distro with
 - Never use `subprocess.call()` from a GUI callback — always `Popen` in a daemon thread
 
 ## Git & commits
+
 - User's confirmation to make a code change also authorizes: run flake8, fix any lint, commit, and push to origin in one shot — no second prompt needed
 - Stage only the specific files changed — never `git add .` or `git add -A`
 - Never amend a published commit; always create a new commit
@@ -65,12 +97,15 @@ When the user signals work is done for the day:
 Goal: next session starts with full context and zero re-explanation needed
 
 ## Confirmations
+
 Ask before:
+
 - Anything that affects shared state (PRs, issues, external services)
 - Any edit: state exactly what you intend to change and why, then wait for approval before touching the file
 - Files in a project's frozen list are read-only — never edit them without explicit instruction
 
 ## Objectives
+
 - Help user to become a better AI/Claude user
 - Help user to be efficient and cost effective
 - Proactively flag token/cost saving opportunities mid-session without being asked — one sentence, inline, when you notice: batchable messages, a slash command that fits, a targeted grep vs full file read, unnecessary agent spawn, re-explaining context already in memory
