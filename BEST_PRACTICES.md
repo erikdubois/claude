@@ -14,6 +14,14 @@ Declare `CHANGED_FILES=()` at the top and pass the relative destination path to 
 **Tip: Print `git diff --cached --stat` before every automated commit so push scripts are self-documenting**
 One line added before `git commit` in any `up.sh`-style script gives a human-readable summary of what is about to ship — file names and line counts. Combined with a secrets check, this turns a silent automation into one where you always know what went up and why. Cost: zero. Benefit: you never have to run `git log -p` to reconstruct what the script did last time.
 
+## 2026-05-18 (session end — claude bootstrap, round 2)
+
+**Tip: A proper `.gitignore` makes `git add --all` safe in general push scripts — only targeted sync scripts need per-file tracking**
+Once `.gitignore` covers sensitive patterns (`*.key`, `*.token`, `.env*`, `settings.local.json`), `git add --all .` in a general-purpose `up.sh` is acceptable — the ignore rules are the right place to declare "never commit these." Only targeted sync scripts (like `sync-bootstrap.sh`) that copy specific files need the `CHANGED_FILES` array pattern, because those scripts must not accidentally stage unrelated files that happen to sit in the same directory. Don't apply per-file tracking everywhere — match the tool to the use case.
+
+**Tip: `TODO.md` and `CHANGELOG.md` are the two minimum context files every project needs — create them before first commit**
+`CHANGELOG.md` tells Claude what happened last session; `TODO.md` tells it what's next. Reading both at session start gives complete orientation in under a minute, with no re-explaining, no git-log archaeology, no "what were we doing?" warm-up. Creating them empty before any code is committed costs nothing and pays forward every future session. Add both to the `session-start` skill read order so they're always loaded automatically.
+
 ## 2026-05-17 (session end — Startup-HQ)
 
 **Tip: Custom slash commands go in `~/.claude/commands/`, not `~/.claude/skills/`**
