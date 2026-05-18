@@ -110,6 +110,16 @@ ensure_git_remote_configured() {
     fi
 }
 
+check_for_secrets() {
+    local patterns='API_KEY|API_SECRET|SECRET_KEY|ACCESS_TOKEN|AUTH_TOKEN|PASSWORD[[:space:]]*=|PASSWD[[:space:]]*=|PRIVATE_KEY|BEGIN RSA PRIVATE|BEGIN EC PRIVATE|BEGIN OPENSSH PRIVATE'
+    if git -C "${SCRIPT_DIR}" diff --cached | grep -qiE "${patterns}"; then
+        log_error "Potentially sensitive data detected in staged changes — aborting"
+        git -C "${SCRIPT_DIR}" diff --cached --stat
+        exit 1
+    fi
+    log_success "No sensitive patterns found in staged content"
+}
+
 git_commit_and_push() {
     local branch
 
@@ -119,6 +129,9 @@ git_commit_and_push() {
     if [[ -z "$(git -C "${SCRIPT_DIR}" status --porcelain)" ]]; then
         log_info "Nothing to commit — working tree clean"
     else
+        log_section "Staged changes"
+        git -C "${SCRIPT_DIR}" diff --cached --stat
+        check_for_secrets
         git -C "${SCRIPT_DIR}" commit -m "update" || log_error "Git commit failed"
     fi
 

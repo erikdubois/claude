@@ -1,0 +1,8 @@
+settings.local.json
+.env
+.env.*
+*.env
+*.key
+*.token
+*.secret
+*.pem

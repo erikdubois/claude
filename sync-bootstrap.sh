@@ -8,12 +8,13 @@ CLAUDE="$HOME/.claude"
 GLOBAL_MEM="$CLAUDE/projects/-home-erik/memory"
 CHANGED=0
 
-mark_changed() { CHANGED=1; }
+CHANGED_FILES=()
+mark_changed() { CHANGED=1; CHANGED_FILES+=("$1"); }
 
 # ── CLAUDE.md ────────────────────────────────────────────────
 if ! diff -q "$CLAUDE/CLAUDE.md" "$BOOTSTRAP/CLAUDE.md" &>/dev/null; then
     cp "$CLAUDE/CLAUDE.md" "$BOOTSTRAP/CLAUDE.md"
-    mark_changed
+    mark_changed "CLAUDE.md"
 fi
 
 # ── settings.json ────────────────────────────────────────────
@@ -29,7 +30,7 @@ for hook in flake8-hook.sh statusline.sh session-start.sh; do
     if ! diff -q "$src" "$dst" &>/dev/null 2>&1; then
         cp "$src" "$dst"
         chmod +x "$dst"
-        mark_changed
+        mark_changed "hooks/$hook"
     fi
 done
 
@@ -42,7 +43,7 @@ if [ -d "$CLAUDE/commands" ]; then
         dst="$BOOTSTRAP/commands/$name"
         if ! diff -q "$cmd_file" "$dst" &>/dev/null 2>&1; then
             cp "$cmd_file" "$dst"
-            mark_changed
+            mark_changed "commands/$name"
         fi
     done
 fi
@@ -57,7 +58,7 @@ for skill_dir in "$CLAUDE/skills"/*/; do
     mkdir -p "$dst"
     if ! diff -q "$src_skill" "$dst_skill" &>/dev/null 2>&1; then
         cp "$src_skill" "$dst_skill"
-        mark_changed
+        mark_changed "skills/$name/SKILL.md"
     fi
 done
 
@@ -69,7 +70,7 @@ sanitized=$(sed \
     "$CLAUDE/best_practices.md")
 if [ "$sanitized" != "$(cat "$BOOTSTRAP/best_practices.md")" ]; then
     echo "$sanitized" > "$BOOTSTRAP/best_practices.md"
-    mark_changed
+    mark_changed "best_practices.md"
 fi
 
 # ── memory — update existing files from global memory ────────
@@ -81,7 +82,7 @@ if [ -d "$GLOBAL_MEM" ]; then
         [ -f "$src_file" ] || continue
         if ! diff -q "$src_file" "$dst_file" &>/dev/null; then
             cp "$src_file" "$dst_file"
-            mark_changed
+            mark_changed "memory/$name"
         fi
     done
 fi
@@ -90,7 +91,7 @@ fi
 if [ "$CHANGED" -eq 1 ]; then
     cd "$BOOTSTRAP"
     git -C "$BOOTSTRAP" rev-parse --git-dir > /dev/null 2>&1 || { echo "bootstrap not a git repo — skipping commit"; exit 0; }
-    git add -A
-    git commit -m "chore: sync bootstrap from ~/.claude/ ($(date +%Y-%m-%d))"
+    git -C "$BOOTSTRAP" add -- "${CHANGED_FILES[@]}"
+    git -C "$BOOTSTRAP" commit -m "chore: sync bootstrap from ~/.claude/ ($(date +%Y-%m-%d))"
     echo "bootstrap synced and committed"
 fi
