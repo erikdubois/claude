@@ -8,6 +8,12 @@ A `.gitignore` added after a file is already tracked does nothing — git keeps 
 **Tip: Grep staged content for secrets before every push from a public repo automation script**
 `git diff --cached | grep -qiE 'API_KEY|SECRET_KEY|ACCESS_TOKEN|PASSWORD[[:space:]]*=|PRIVATE_KEY|BEGIN RSA PRIVATE'` aborts a push script before the commit lands. Add it as a `check_for_secrets()` function called after staging and before `git commit` in any `up.sh`-style script. The grep runs on the diff, not the whole file, so false positives on variable *names* are rare. If it fires, print `git diff --cached --stat` so the user sees exactly what triggered it. One wrong push to a public repo means credential rotation — the check costs milliseconds.
 
+**Tip: In automation scripts, track exactly which files were copied — don't rely on `git add -A` to stage only what changed**
+Declare `CHANGED_FILES=()` at the top and pass the relative destination path to `mark_changed()` every time a file is copied: `mark_changed "hooks/session-start.sh"`. Then commit with `git add -- "${CHANGED_FILES[@]}"`. This ensures the commit contains only the files the script actually synced — not unrelated files that happen to sit in the same directory. `git add -A` in a sync script is silent about what it picks up; the array makes it explicit and auditable.
+
+**Tip: Print `git diff --cached --stat` before every automated commit so push scripts are self-documenting**
+One line added before `git commit` in any `up.sh`-style script gives a human-readable summary of what is about to ship — file names and line counts. Combined with a secrets check, this turns a silent automation into one where you always know what went up and why. Cost: zero. Benefit: you never have to run `git log -p` to reconstruct what the script did last time.
+
 ## 2026-05-17 (session end — Startup-HQ)
 
 **Tip: Custom slash commands go in `~/.claude/commands/`, not `~/.claude/skills/`**
