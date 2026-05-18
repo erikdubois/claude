@@ -33,6 +33,20 @@ for hook in flake8-hook.sh statusline.sh session-start.sh; do
     fi
 done
 
+# ── commands ─────────────────────────────────────────────────
+if [ -d "$CLAUDE/commands" ]; then
+    mkdir -p "$BOOTSTRAP/commands"
+    for cmd_file in "$CLAUDE/commands/"*.md; do
+        [ -f "$cmd_file" ] || continue
+        name=$(basename "$cmd_file")
+        dst="$BOOTSTRAP/commands/$name"
+        if ! diff -q "$cmd_file" "$dst" &>/dev/null 2>&1; then
+            cp "$cmd_file" "$dst"
+            mark_changed
+        fi
+    done
+fi
+
 # ── skills ───────────────────────────────────────────────────
 for skill_dir in "$CLAUDE/skills"/*/; do
     name=$(basename "$skill_dir")

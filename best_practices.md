@@ -1,5 +1,13 @@
 # Claude Best Practices
 
+## 2026-05-17 (session end — Startup-HQ)
+
+**Tip: Custom slash commands go in `~/.claude/commands/`, not `~/.claude/skills/`**
+Files in `~/.claude/skills/` are only invocable via the internal Skill tool — typing `/<name>` in the prompt gives "unknown command". User-typeable slash commands must be `.md` files in `~/.claude/commands/`; the filename (without `.md`) becomes the command name. If a skill is meant to be triggered by the user directly, move it to `commands/`. Also update any sync script (e.g. `sync-bootstrap.sh`) to mirror the `commands/` directory, not just `skills/`.
+
+**Tip: Consolidate setup scripts to a single entry point per machine role**
+Having two scripts (`get-me-started` + `create-new-hq.sh`) for the same machine role forces the user to remember which to run and in what order. When one is a strict subset of the other, merge the smaller one in as functions called from `main()`. The result is one authoritative runbook where reading `main()` top-to-bottom tells the full story. Keep separate scripts only when they target genuinely different audiences (root vs user) or different trigger points (pre-reboot vs post-reboot).
+
 ## 2026-05-17 (session end — claude bootstrap)
 
 **Tip: Encode multi-step checklists as skills, not as CLAUDE.md prose**
