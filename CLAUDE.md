@@ -47,6 +47,7 @@ Erik — Arch Linux developer building Kiro, a full Arch-based Linux distro with
 
 - Use plan mode before any change touching more than 2 files or with irreversible effects
 - Every project must have a CHANGELOG.md; create one if absent
+- Every project must have a TODO.md; create one if absent
 - After every session that changes code: update CHANGELOG.md without being asked
 - Entry format — one entry per date (`YYYY.MM.DD`), consolidating all changes that day:
   - **What Changed** — what was done and why
@@ -56,7 +57,7 @@ Erik — Arch Linux developer building Kiro, a full Arch-based Linux distro with
 
 ### Session start
 
-Read in this order before doing any work: global CLAUDE.md → project CLAUDE.md → memory files → CHANGELOG.md
+Read in this order before doing any work: global CLAUDE.md → project CLAUDE.md → memory files → CHANGELOG.md → TODO.md
 
 The `SessionStart` hook auto-runs `git pull` on the workspace and syncs `~/EDU/claude/` bootstrap from `~/.claude/`.
 

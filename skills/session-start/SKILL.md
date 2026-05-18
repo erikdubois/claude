@@ -13,6 +13,7 @@ Run the session-start checklist for the current project. Execute all steps silen
 - Project `CLAUDE.md` — project instructions, current state, next steps
 - `.claude/memory/MEMORY.md` — memory index; read any memory files relevant to today's work
 - `CHANGELOG.md` — what was done last session
+- `TODO.md` — current open tasks and pending work
 
 ### 2. Git status
 ```bash
