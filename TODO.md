@@ -3,7 +3,7 @@
 ## Open
 
 - [ ] Verify skills in `~/EDU/claude/skills/` are also present in `~/.claude/skills/` — sync currently goes one way only (from `~/.claude/` to repo); skills that exist only in the repo won't be loaded by the harness
-- [ ] Tighten `up.sh` staging: `git add --all .` is intentionally broad for a general push script, but could be scoped to managed paths now that `.gitignore` exists
+- [x] Tighten `up.sh` staging: `git add --all .` is acceptable — `.gitignore` excludes sensitive files; `up.sh` is a general push script and must stage all manually edited files
 
 ## Done
 
