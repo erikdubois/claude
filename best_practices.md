@@ -1,5 +1,13 @@
 # Claude Best Practices
 
+## 2026-05-18 (session end — edu-system-files config audit)
+
+**Tip: Before deploying any multi-block config file, grep for duplicate keys — the last value wins silently and earlier blocks become false documentation**
+`grep -oP '^\w[\w\.]+' /etc/sysctl.d/file.conf | sort | uniq -d` finds duplicate sysctl keys in seconds. For journald/systemd drop-ins, check repeated option names the same way. In this session, `net.core.netdev_max_backlog` had conflicting values (4096 vs 5000) at two points in the same file, `RateLimitBurst` was set three times ending at 0 (disabling rate limiting entirely), and `Compress`/`Seal` were set and then contradicted. The earlier blocks documented an intent that the file wasn't actually implementing. Audit before shipping.
+
+**Tip: Security hardening settings have usability costs — test them against real developer workflows before distributing**
+`kernel.sysrq=0` removes the REISUB emergency reboot sequence; a hung system requires a hard power-off instead of a clean sync-and-reboot. `kernel.yama.ptrace_scope=2` breaks gdb, strace, rr, and every IDE debug adapter that attaches to a running process rather than spawning one. These settings look correct in a hardening guide but break real daily work on a developer desktop. Before shipping a hardened sysctl config to end users, validate each security knob against: can the user debug a crash? can they recover a frozen system? can containers still function?
+
 ## 2026-05-18 (session end — .claude cleanup)
 
 **Tip: Audit `settings.json` allow list for session artifacts — one-time approvals accumulate silently**
