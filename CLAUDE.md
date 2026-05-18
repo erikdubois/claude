@@ -22,7 +22,7 @@ Erik — Arch Linux developer building Kiro, a full Arch-based Linux distro with
 - Docstrings follow PEP 257: public functions/methods/modules should have a one-line docstring; private functions (prefixed `_`) do not require them; never write multi-paragraph docstrings
 - Don't add error handling for scenarios that can't happen
 - Don't introduce abstractions beyond what the task requires
-- Python: max line length 120; always run flake8 before considering any Python work done (don't ask permission, just run it)
+- Python: max line length 120; always run ruff check before considering any Python work done (don't ask permission, just run it)
 - Bash scripts: always start with `set -euo pipefail`
 - Bash scripts in `~/EDU/` and `~/KIRO/` repos follow the standard template modelled on `~/EDU/archlinux-tweak-tool-gtk4/up.sh` and `setup.sh`. Every new script must include, in order:
   1. `#!/bin/bash` + `set -euo pipefail`
@@ -38,7 +38,7 @@ Erik — Arch Linux developer building Kiro, a full Arch-based Linux distro with
 - Never use `subprocess.call()` from a GUI callback — always `Popen` in a daemon thread
 
 ## Git & commits
-- User's confirmation to make a code change also authorizes: run flake8, fix any lint, commit, and push to origin in one shot — no second prompt needed
+- User's confirmation to make a code change also authorizes: run ruff check, fix any lint, commit, and push to origin in one shot — no second prompt needed
 - Stage only the specific files changed — never `git add .` or `git add -A`
 - Never amend a published commit; always create a new commit
 - Never force-push
@@ -58,6 +58,8 @@ Erik — Arch Linux developer building Kiro, a full Arch-based Linux distro with
 ### Session start
 
 Read in this order before doing any work: global CLAUDE.md → project CLAUDE.md → memory files → CHANGELOG.md → TODO.md
+
+After reading, check for the existence of these files in the current working directory and create any that are missing (empty stubs with appropriate headers): `CHANGELOG.md`, `CLAUDE.md`, `IDEAS.md`, `TODO.md`, `README.md`.
 
 The `SessionStart` hook auto-runs `git pull` on the workspace and syncs `~/EDU/claude/` bootstrap from `~/.claude/`.
 

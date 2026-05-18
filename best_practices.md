@@ -1,5 +1,70 @@
 # Claude Best Practices
 
+## 2026-05-18 (session end — .claude cleanup)
+
+**Tip: Audit `settings.json` allow list for session artifacts — one-time approvals accumulate silently**
+Every time you click "Allow" on a novel Bash command, an entry lands in `settings.json`. Over weeks this fills with hardcoded line-range reads (`sed -n '55,62p' file.py`), one-time refactor commands (`sed -i 's/old/new/g' *.py`), and per-file linter invocations superseded by a hook. Periodically run `jq '.permissions.allow[]' ~/.claude/settings.json` and ask: "is this a repeating pattern or a stale artifact?" Delete the artifacts; replace repeating patterns with generic glob forms (`Bash(ruff check *)`). After several months of normal use, the list will have grown 3–4× beyond what is genuinely useful — today's cleanup went from 62 entries to 20.
+
+**Tip: A script in `~/.claude/hooks/` does NOT auto-run — every hook needs an explicit `settings.json` entry**
+Claude Code does not discover hook scripts from the `hooks/` directory. A `hooks/session-start.sh` that exists but is absent from `settings.json` under the right event key (`SessionStart`, `PostToolUse`, etc.) never fires. Verify which hooks are actually wired with `jq '.hooks' ~/.claude/settings.json`. The gap between "script file exists" and "hook actually fires" can leave automation silently doing nothing for months — confirmed today when `session-start.sh` was found unwired despite being documented as running every session.
+
+## 2026-05-18 (session end — plymouth-theme-startrek)
+
+**Tip: Plymouth breathing/glow animations use two layered sprites — one scaled, one at Z(-1) — driven by Math.Sin on state.time**
+In Plymouth's script language, `Image.Scale(w, h)` creates a scaled copy once at startup (no per-frame cost). Place the scaled copy behind the main sprite with `SetZ(-1)` and center it by offsetting half the size delta. Then drive both sprites with `breath = (Math.Sin(state.time * 0.05) + 1) / 2` in the refresh callback: main sprite 0.8→1.0 opacity, glow sprite 0.0→0.45. `state.time` increments by 1.0 each refresh call; at Plymouth's 50 Hz rate, `* 0.05` gives a ~2.5-second breathing cycle. Adjust the multiplier to taste — 0.03 for slower, 0.08 for faster.
+
+**Tip: Test Plymouth themes without rebooting — `plymouthd --no-daemon --debug` in one terminal, `plymouth --show-splash` in another**
+Rebooting to check every Plymouth script change wastes minutes per iteration. Instead: `sudo plymouthd --no-daemon --debug` starts the daemon in the foreground (Ctrl-C to stop); then in a second terminal `sudo plymouth --show-splash` renders the theme. Script errors appear in the first terminal's output. `sudo plymouth quit` tears it down cleanly. This loop — edit script, show-splash, inspect, quit — cuts Plymouth development time dramatically.
+
+
+## 2026-05-19 (session end — Startup-HQ)
+
+**Tip: In setup scripts, put all interactive prompts at the very top of `main()` — before any irreversible side effects**
+A user who answers "no" to the chroot prompt at step 12 has already sat through 11 steps of work that is now wasted. Move every interactive `read`-based prompt to the start of `main()`, in decision order. The script makes all decisions upfront, then executes without interruption. If a prompt is buried in a function that also does work (like `setup_archlinux_chroot`), keep the prompt logic at the top of that function and call the function first. Side effects that the user hasn't approved should never precede the approval.
+
+**Tip: Add a `preflight_checks()` as the first call in `main()` for any setup script — validate before touching anything**
+Check all hard dependencies before any side effects: required binaries present (`rsync`, `git`, `pacman`), required paths accessible, running user is not root (or is root, depending on the script). A preflight that fails prints exactly what is missing and exits 1. Without it, a missing binary causes a confusing mid-script failure after irreversible steps have already run. The function costs ten lines and prevents every "script blew up halfway through" scenario.
+
+
+
+## 2026-05-18 (session end — alacritty-tweak-tool, second session)
+
+**Tip: Disable Claude Code notification sounds with `"preferredNotifChannel": "notifications_disabled"` in `~/.claude/settings.json`**
+Claude Code emits OS notifications (and sometimes a terminal bell) when it finishes a task or needs input. On Arch Linux with Alacritty these land as sound alerts. Setting `"preferredNotifChannel": "notifications_disabled"` in `~/.claude/settings.json` turns off the notification channel entirely — no bell, no popup. Useful in focused work environments where the sound is distracting. To re-enable later, remove the key or set it to `"auto"`.
+
+**Tip: Design asset directories for zero-code extension — a metadata file per directory is all that's needed**
+When building a feature that has many interchangeable assets (themes, plugins, presets), make the discovery mechanism filesystem-driven: scan a parent directory, read a `source.json` (or equivalent) in each subdirectory, and build the runtime list from that. Adding a new source then costs zero Python changes — drop a new directory with `source.json` and the app finds it automatically. This session: the `data/themes/kiro/` Kiro theme group was fully wired up with just two TOML files and a `source.json`, no Python edits needed.
+
+## 2026-05-18 (session end — alacritty-tweak-tool)
+
+**Tip: `notify::width` does NOT fire on GTK4 widgets — use a polling timer to detect VTE resize**
+In GTK4, `widget.connect("notify::width", handler)` looks like it should fire when the widget allocation changes, but `width` is a computed accessor, not a real GObject notify property. The signal never arrives. For detecting VTE column count changes (e.g. to respawn fastfetch on window resize), the only reliable approach is a `GLib.timeout_add(500, poll_fn)` started on the `map` signal. Inside the poll: call `vte.get_column_count()`, compare to the last known value, and act on change. Add a two-poll stability check (`state["pending"]`) to avoid spawning during an in-progress resize.
+
+**Tip: Strip `COLUMNS` from the environment before spawning a child process in a VTE terminal**
+When the app is started from a terminal, the parent shell sets `COLUMNS` in the environment. Tools like `fastfetch` read `COLUMNS` first and use it to size their output — bypassing the PTY's `ioctl(TIOCGWINSZ)` entirely. The result: fastfetch renders at the parent shell's width, not the VTE widget's width. Fix: build `envv = [f"{k}={v}" for k, v in os.environ.items() if k != "COLUMNS"]` and pass it as the `envv` argument to `vte.spawn_async()`. With `COLUMNS` absent, the child reads the PTY dimensions correctly.
+
+## 2026-05-18 (session end — claude bootstrap)
+
+**Tip: Create `.gitignore` before the first commit in any repo destined for a public host**
+A `.gitignore` added after a file is already tracked does nothing — git keeps versioning it. The right habit: write `.gitignore` as the very first file, before any other content is committed. For bootstrap/config repos the minimum list is `settings.local.json`, `.env*`, `*.key`, `*.token`, `*.pem`, `*.secret`. A credential that slips into history before the ignore rule exists requires `git filter-repo` to scrub — a painful, disruptive operation on any published repo.
+
+**Tip: Grep staged content for secrets before every push from a public repo automation script**
+`git diff --cached | grep -qiE 'API_KEY|SECRET_KEY|ACCESS_TOKEN|PASSWORD[[:space:]]*=|PRIVATE_KEY|BEGIN RSA PRIVATE'` aborts a push script before the commit lands. Add it as a `check_for_secrets()` function called after staging and before `git commit` in any `up.sh`-style script. The grep runs on the diff, not the whole file, so false positives on variable *names* are rare. If it fires, print `git diff --cached --stat` so the user sees exactly what triggered it. One wrong push to a public repo means credential rotation — the check costs milliseconds.
+
+**Tip: In automation scripts, track exactly which files were copied — don't rely on `git add -A` to stage only what changed**
+Declare `CHANGED_FILES=()` at the top and pass the relative destination path to `mark_changed()` every time a file is copied: `mark_changed "hooks/session-start.sh"`. Then commit with `git add -- "${CHANGED_FILES[@]}"`. This ensures the commit contains only the files the script actually synced — not unrelated files that happen to sit in the same directory. `git add -A` in a sync script is silent about what it picks up; the array makes it explicit and auditable.
+
+**Tip: Print `git diff --cached --stat` before every automated commit so push scripts are self-documenting**
+One line added before `git commit` in any `up.sh`-style script gives a human-readable summary of what is about to ship — file names and line counts. Combined with a secrets check, this turns a silent automation into one where you always know what went up and why. Cost: zero. Benefit: you never have to run `git log -p` to reconstruct what the script did last time.
+
+## 2026-05-18 (session end — claude bootstrap, round 2)
+
+**Tip: A proper `.gitignore` makes `git add --all` safe in general push scripts — only targeted sync scripts need per-file tracking**
+Once `.gitignore` covers sensitive patterns (`*.key`, `*.token`, `.env*`, `settings.local.json`), `git add --all .` in a general-purpose `up.sh` is acceptable — the ignore rules are the right place to declare "never commit these." Only targeted sync scripts (like `sync-bootstrap.sh`) that copy specific files need the `CHANGED_FILES` array pattern, because those scripts must not accidentally stage unrelated files that happen to sit in the same directory. Don't apply per-file tracking everywhere — match the tool to the use case.
+
+**Tip: `TODO.md` and `CHANGELOG.md` are the two minimum context files every project needs — create them before first commit**
+`CHANGELOG.md` tells Claude what happened last session; `TODO.md` tells it what's next. Reading both at session start gives complete orientation in under a minute, with no re-explaining, no git-log archaeology, no "what were we doing?" warm-up. Creating them empty before any code is committed costs nothing and pays forward every future session. Add both to the `session-start` skill read order so they're always loaded automatically.
+
 ## 2026-05-17 (session end — Startup-HQ)
 
 **Tip: Custom slash commands go in `~/.claude/commands/`, not `~/.claude/skills/`**
@@ -1180,3 +1245,35 @@ Connect `paned.connect("notify::position", lambda *_: save_prefs())` immediately
 
 **Tip: Give each paned widget its own prefs key even when they share the same default position**
 When two tabs both use a split layout, separate keys (`paned_themes_pos`, `paned_appearance_pos`) let the user tune each tab independently — a wide list on one tab and a narrower settings panel on another. A single shared key forces a compromise. The cost is one extra string per tab; the benefit is per-widget muscle memory that survives restarts.
+
+## 2026-05-18 (session end ATT simplify pass)
+
+**Tip: Call your `_refresh_*` helpers at init time — don't duplicate the if/else inline**
+When you add a `_refresh_label(self)` helper to update a widget post-install, call it at GUI build time too (immediately after `self.label = Gtk.Label(...)`). The widget only needs to exist before the refresh function runs — no circular dependency. Duplicating the if/else inline creates two sources of truth: a future label wording change requires edits in two places and the duplication is invisible until `/simplify` catches it.
+
+**Tip: Run `/simplify` after every multi-session feature addition, not just after large refactors**
+Code reuse gaps like init/refresh duplication accumulate silently across sessions: one session adds the `_refresh_*` helper, the next session writes the GUI init without knowing the helper exists. `/simplify` catches these in one pass by launching three agents in parallel (reuse, quality, efficiency). It's cheap on a clean working tree — the diff is small and the agents run fast. Treat it as a post-feature hygiene step, not an occasional deep-clean.
+
+## 2026-05-18 (session end arcolinux-nemesis)
+
+**Tip: Install `flake8` and `ruff` as system packages, not pip deps — they survive virtualenv resets and are always on PATH**
+Linting tools installed via pip into a virtualenv disappear the moment the env is recreated or switched. Installing them via pacman (`flake8`, `ruff`) makes them available system-wide for every project, every shell, every CI-equivalent manual run. For nemesis-based setups, add them to the core packages list in `110-install-core-software.sh` so they're guaranteed on any fresh Arch install. The rule: if you run a tool in every project, it belongs in the system package list, not per-project deps.
+
+**Tip: Curl-check new mirrorlist entries before committing — a dead mirror adds 3–5 second timeouts to every `pacman -Syu`**
+When adding mirrors to a mirrorlist manually, validate them first: `curl -s --max-time 3 -o /dev/null -w "%{http_code}" "https://new-mirror.example/$repo/os/$arch/core.db"` with `$repo=core $arch=x86_64`. A 2xx response means the mirror is live; anything else means skip it. Pacman tries every enabled mirror on timeout, so one dead entry multiplies the slowdown across every sync. A 5-second spot-check per new mirror pays for itself on the first `pacman -Syu`.
+
+## 2026-05-18 (session end kiro-iso build script standardization)
+
+**Tip: Always anchor script paths to SCRIPT_DIR, never to $PWD — callers set $PWD, not you**
+Any script that uses bare relative paths like `cp pacman.conf /etc/pacman.conf` will silently operate on the wrong file when called from a different directory. The fix is a single line at the top: `SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"`. Then every path becomes `"${SCRIPT_DIR}/pacman.conf"`. This matters most for scripts called by other scripts (build orchestrators, CI), where the caller's working directory is unpredictable. The rule: if a script reads or writes files relative to itself, use SCRIPT_DIR. If it operates on the user's current project, $PWD is intentional — know the difference.
+
+**Tip: Guard tput with [[ -t 1 ]] or your color codes will corrupt piped and redirected output**
+`tput setaf 2` emits raw escape sequences. In a terminal they render as color; in a pipe, a log file, or CI output they appear as literal garbage characters. The correct pattern: `if command -v tput >/dev/null 2>&1 && [[ -t 1 ]]; then RED="$(tput setaf 1)"; ...; else RED="" GREEN="" ...; fi`. The `[[ -t 1 ]]` check tests whether stdout is an interactive terminal. With this guard, the same script is human-readable in a terminal and machine-readable when captured. Apply this pattern once at the top; the log functions then use the variables unconditionally.
+
+## 2026-05-18 (session end kiro-iso cleanup)
+
+**Tip: When removing a feature, grep the whole repo first — then leave CHANGELOG history untouched**
+Before removing a package name, variable, or DE reference, run `grep -rn "term" . --include="*.sh" --include="*.md" --include="*.conf"` to find every occurrence. Fix all forward-facing files (scripts, docs, config). Then stop: CHANGELOG entries that mention the removed thing are historical record — rewriting them to pretend the feature never existed destroys the audit trail. The rule: grep everything, fix the present, preserve the past.
+
+**Tip: Audit README file references with ls before committing — stale paths erode trust faster than missing docs**
+A README that lists files which don't exist (enable-oomd.sh, personal_repo/, packages.bootstrap) is worse than a shorter README, because it tells readers the project is poorly maintained. Before finalising any docs change, run `ls <each-file-or-dir-mentioned>` to verify they exist. For project trees in particular, generate the list from the actual filesystem rather than writing it from memory — `find . -maxdepth 2 -not -path './.git/*'` gives you the ground truth in seconds.
