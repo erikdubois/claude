@@ -65,6 +65,14 @@ Instead of writing a separate `sysctl -n key` + compare block for each security 
 **Tip: `VBoxManage modifyvm --natpf1` only works when the VM is stopped — use `VBoxManage controlvm natpf1` for live VMs**
 `VBoxManage modifyvm "Name" --natpf1 "rule,tcp,,2022,,22"` requires the VM to be in `poweroff`, `saved`, or `aborted` state — running it against a live VM returns an error. For a running VM, use `VBoxManage controlvm "Name" natpf1 "rule,tcp,,2022,,22"` (no `--` prefix, no `modifyvm`). When scripting VM setup, detect state first with `VBoxManage showvminfo --machinereadable | grep '^VMState='` and dispatch to the correct command. Also: when grepping machinereadable output for an existing NAT rule, match `"rulename,` (name + comma) not `"rulename"` — the format is `natpf1="rulename,tcp,,port,,22"` so the closing quote never follows the name directly.
 
+## 2026-05-19 (session end — kiro-iso deep verification)
+
+**Tip: archiso only creates a directory on the live ISO if at least one file exists in it — use a placeholder file, not an empty directory**
+`mkarchiso` builds the squashfs from the airootfs overlay by copying files. If a directory contains no files, it is silently omitted from the live ISO. For directories that must exist at runtime (e.g. `sshd_config.d/`, `tmpfiles.d/`) but whose contents vary between live and installed environments, keep a real file in the source even if you wish the directory were empty. If you need the directory without any functional config, use a benign placeholder (a `.keep` file or a minimal stub). Deleting the last file in such a directory will cause "directory not found" errors at runtime — confirmed with `sshd_config.d/` in kiro-iso.
+
+**Tip: After a `git add --all` commit, always check `git show --stat HEAD` to verify no deleted files were silently re-added**
+`up.sh`-style scripts that do `git add --all` before committing will re-add any file that was deleted from git history but still exists on disk — for example if a build process, editor, or another terminal recreated it. A file you deliberately removed via `git rm` can silently reappear in the next `up.sh` run if the physical file was restored. After any `git add --all` commit that was meant to include a deletion, run `git show --stat HEAD` and scan for `| N +++` lines on files that should have been removed. The pattern is especially treacherous when builds run concurrently with git operations.
+
 ## 2026-05-19 (session end — Startup-HQ)
 
 **Tip: In setup scripts, put all interactive prompts at the very top of `main()` — before any irreversible side effects**
