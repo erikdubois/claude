@@ -14,6 +14,9 @@ Run ALL of the following commands sequentially (not in parallel — a failure mu
 8. `journalctl -u NetworkManager -p warning --since "3 hours ago" --no-pager` — network config changes
 9. `journalctl -u sddm -p warning --since "3 hours ago" --no-pager` — display manager issues (login keyring, PAM, etc.)
 10. `ls /etc/udev/rules.d/` — local udev rules (from system-files packages)
+11. `git -C /home/erik/EDU/edu-system-files log --oneline -5; git -C /home/erik/EDU/edu-system-files status --short` — recent commits and uncommitted changes in edu-system-files source
+12. `git -C /home/erik/KIRO/kiro-iso log --oneline -5; git -C /home/erik/KIRO/kiro-iso status --short` — recent commits and uncommitted changes in kiro-iso source
+13. `sudo kiro-audit 2>&1` — full installed-system audit (requires sudo; shows PASS/WARN/FAIL for udev rules, permissions, services, packages, etc.)
 
 After collecting all output, present a structured summary with these sections:
 
@@ -22,6 +25,8 @@ After collecting all output, present a structured summary with these sections:
 **Service Failures** — failed units, stopped services, PAM errors
 **Package Activity** — what pacman installed/removed/upgraded recently, flag anything system-config related
 **Network / Display** — NM and SDDM warnings
+**Source Project State** — recent commits and dirty files in edu-system-files and kiro-iso; flag uncommitted changes that may not be deployed yet
+**Kiro Audit** — summarise kiro-audit PASS/WARN/FAIL counts; list every FAIL and WARN line; note if FAIL=0
 **Pre-existing vs New** — flag anything that looks like it appeared after the most recent pacman transaction
 
 If $ARGUMENTS is provided, use it as a package name or time window to focus the check (e.g. `/syscheck edu-system-files` or `/syscheck 30min`).
