@@ -1326,6 +1326,14 @@ When copying files from a `-next` repo to its production sibling, package names,
 **Tip: Pair the config repo to its matching ISO repo — never cross them when suggesting a build command**
 In a project with parallel stable/beta tracks (e.g. `kiro-calamares-config` + `kiro-iso`, `kiro-calamares-config-next` + `kiro-iso-next`), always trigger the ISO build in the repo that matches the config repo you just pushed to. The ISO build pulls the Calamares package from GitHub Pages, which was published by the config repo's CI. Crossing them (building `kiro-iso` after pushing to `kiro-calamares-config-next`) results in the wrong Calamares package being bundled and a confusing mismatch between what was tested and what ships.
 
+## 2026-05-19 (edu-system-files session 3)
+
+**Tip: Add a `--fix` mode to audit scripts with a single `apply_fix` helper — never scatter mode-checks inline**
+An audit script that reports FAILs but can't remediate them forces the user to copy commands from the output manually. Add `FIX_MODE=false`, parse `--fix` in the arg loop, and funnel all fix actions through one helper: `apply_fix "description" cmd [args...]`. In fix mode it prints the description and runs `"$@"` (no eval); in read-only mode it prints a `FIX?  --fix: <description>` hint instead. A single function keeps mode-awareness out of every check function. Important: increment a `FIXED` counter on success and report it in the summary separately from `FAIL` — the failure count reflects what was found pre-fix, and you want to prompt a re-run to confirm, not claim all clears.
+
+**Tip: Never hardcode a version string in a packaged script — query the owning package at runtime**
+A hardcoded `echo "myscript version 1.2.3"` goes stale the moment the package is rebuilt. Use `pacman -Qqo "$(realpath "${BASH_SOURCE[0]}")" 2>/dev/null` to get the package name that owns the running script, then `pacman -Q "$pkg"` to print `<pkg> <version>` from the live package database. Falls back gracefully with `|| echo "$(basename "$0") (not installed via pacman)"` for dev runs from the repo. The output matches the installed version precisely, requires no manual updates, and works for any script in any package.
+
 ## 2026-05-19 (edu-system-files session)
 
 **Tip: In kiro-common.sh, `log_error` is the ERR trap handler — never pass it a plain message string**
