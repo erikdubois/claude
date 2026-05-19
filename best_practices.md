@@ -1301,3 +1301,11 @@ Before removing a package name, variable, or DE reference, run `grep -rn "term" 
 
 **Tip: Audit README file references with ls before committing — stale paths erode trust faster than missing docs**
 A README that lists files which don't exist (enable-oomd.sh, personal_repo/, packages.bootstrap) is worse than a shorter README, because it tells readers the project is poorly maintained. Before finalising any docs change, run `ls <each-file-or-dir-mentioned>` to verify they exist. For project trees in particular, generate the list from the actual filesystem rather than writing it from memory — `find . -maxdepth 2 -not -path './.git/*'` gives you the ground truth in seconds.
+
+## 2026-05-19 (session end kiro-calamares-config-next promotion)
+
+**Tip: After promoting beta config to production, grep the production repo for the beta suffix before committing**
+When copying files from a `-next` repo to its production sibling, package names, self-removal commands, and debug strings often still reference `-next`. Run `grep -rn "next" --include="*.conf" --include="*.py" --include="*.sh" --include="*.md" --include="PKGBUILD" <production-repo>/ | grep -v "\.git/"` immediately after the file copies and before staging anything. Review every hit: fix stale repo/package name references; leave Python `__next__`/`.next()`, Calamares config keys, and `provides=('<package>-next')` virtual package entries untouched. One missed string (like a `pacman -R <package>-next` in post-install cleanup) will silently fail to remove the installer package on every production install.
+
+**Tip: Pair the config repo to its matching ISO repo — never cross them when suggesting a build command**
+In a project with parallel stable/beta tracks (e.g. `kiro-calamares-config` + `kiro-iso`, `kiro-calamares-config-next` + `kiro-iso-next`), always trigger the ISO build in the repo that matches the config repo you just pushed to. The ISO build pulls the Calamares package from GitHub Pages, which was published by the config repo's CI. Crossing them (building `kiro-iso` after pushing to `kiro-calamares-config-next`) results in the wrong Calamares package being bundled and a confusing mismatch between what was tested and what ships.
