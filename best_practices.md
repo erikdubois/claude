@@ -41,6 +41,14 @@ In Plymouth's script language, `Image.Scale(w, h)` creates a scaled copy once at
 Rebooting to check every Plymouth script change wastes minutes per iteration. Instead: `sudo plymouthd --no-daemon --debug` starts the daemon in the foreground (Ctrl-C to stop); then in a second terminal `sudo plymouth --show-splash` renders the theme. Script errors appear in the first terminal's output. `sudo plymouth quit` tears it down cleanly. This loop — edit script, show-splash, inspect, quit — cuts Plymouth development time dramatically.
 
 
+## 2026-05-19 (session end — linux-kiro-lqx kernel audit + version bump)
+
+**Tip: Cross-reference `/proc/config.gz` with machine hardware to find dead config options before each kernel rebuild**
+`zcat /proc/config.gz | grep -E 'KVM_AMD|BINDER|LANDLOCK'` on the running kernel reveals modules compiled-in but unused: `KVM_AMD` on an Intel machine, `ANDROID_BINDER_IPC_RUST` on a desktop with no containers, LSMs like `LANDLOCK` built but absent from the boot LSM list. Each wastes compile time and binary space. Pair with `lsmod | grep <name>` to confirm nothing loads them at runtime. Audit after each upstream bump — new upstream configs can silently re-enable options you previously disabled.
+
+**Tip: Bumping a custom kernel's minor version requires exactly four steps — no more**
+Download the new patch (`curl -L url > vX.Y.Z-lqxN.patch`), update `_minor` in PKGBUILD and reset `pkgrel=1`, delete the old patch file, then let `updpkgsums` recalculate b2sums during the build. The input `config` file is version-independent and must not be touched during a minor bump — it outlives individual kernel versions and carries your hardware-specific tuning across bumps. Only touch `config` when you have a deliberate config change to make.
+
 ## 2026-05-19 (session end — kiro-iso audit expansion + riker)
 
 **Tip: Use `declare -A` associative arrays in bash audit scripts for key/expected-value checks — one loop replaces N identical if-blocks**
