@@ -1357,3 +1357,11 @@ A hardcoded `echo "myscript version 1.2.3"` goes stale the moment the package is
 
 **Tip: `mandb` runs on a daily systemd timer, not at boot — run it manually after deploying new man pages**
 `man-db.timer` fires once daily with up to 12 hours of random delay. A freshly copied `.8` file won't appear in `man kiro<Tab>` completion until the timer fires or you run `sudo mandb` yourself. Any deploy script that installs man pages to `/usr/share/man/` should call `mandb` as its last step, or the user will hit a confusing "no completions" gap that fixes itself overnight.
+
+## 2026-05-19 (ATT bluetooth + deferred-tab bug sweep)
+
+**Tip: In GTK4 lazy-built pages, always call refresh() immediately after connecting it to the map signal**
+`_defer_tab(container, build_fn)` builds the GUI on the container's first `map` signal. By the time `build_fn` runs and connects `container.connect("map", _refresh)`, that `map` event has already fired — so `_refresh` is never called on first load, leaving buttons permanently greyed out until the user navigates away and back. Fix: call `_refresh(self, fn)` (or the equivalent named callback) once at the end of every `gui()` function that uses this pattern, in addition to connecting it to `map`. One extra line; the `map` connection still fires on subsequent visits.
+
+**Tip: Back up any file a third-party tool will overwrite before the tool runs, not after**
+Tools like `hblock`, `reflector`, or `grub-mkconfig` overwrite system files completely, discarding the user's customisations. The backup must happen before the tool runs — checking for an existing backup first so re-runs are idempotent: `if not os.path.exists("/etc/hosts-bak"): shutil.copy2("/etc/hosts", "/etc/hosts-bak")`. On removal, restore the backup then delete it. Doing the backup after the tool runs defeats the purpose: the original is already gone. Applies to any ATT feature that delegates a write to an external binary.
