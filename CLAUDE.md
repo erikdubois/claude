@@ -77,6 +77,10 @@ When the user signals work is done for the day:
 
 Goal: next session starts with full context and zero re-explanation needed
 
+## Shorthand Commands
+
+- **`todo` or `todo?`** — read `TODO.md` in the current project directory and display all tasks as a numbered list so the user can pick the next one by number.
+
 ## Confirmations
 Ask before:
 - Anything that affects shared state (PRs, issues, external services)
