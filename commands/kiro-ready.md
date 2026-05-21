@@ -50,12 +50,12 @@ Report the ISO filename, size, and timestamp.
 
 Render a clear **GO** or **NO-GO** block followed by a two-column table:
 
-| Check | Status |
-|---|---|
-| All 5 repos clean + pushed | PASS / FAIL |
-| No TODO blockers | PASS / FAIL |
-| Last distro test: FAIL count | 0 / N |
-| kiro-audit: FAIL count | 0 / N |
+| Check                              | Status            |
+|------------------------------------|-------------------|
+| All 5 repos clean + pushed         | PASS / FAIL       |
+| No TODO blockers                   | PASS / FAIL       |
+| Last distro test: FAIL count       | 0 / N             |
+| kiro-audit: FAIL count             | 0 / N             |
 | ISO built recently (within 7 days) | PASS / FAIL / N/A |
 
 **GO** = all PASS and kiro-audit FAIL = 0.

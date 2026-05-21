@@ -152,23 +152,23 @@ git commit -m "chore: sync claude memory"
 
 These are the most important rules Claude follows in every session. Full details in the memory files.
 
-| Rule | File |
-|------|------|
-| Never edit without explicit confirmation | `feedback_no_changes_without_consent.md` |
-| Re-asking = implicit confirm, just implement | `feedback_confirm_re_ask.md` |
-| After "go ahead", no mid-plan check-ins | `feedback_just_go_ahead.md` |
-| git pull before every task, Claude owns all git ops | `feedback_git_management.md` |
-| Confirm → Claude edits, lints, commits, pushes | `feedback_user_commits.md` |
-| flake8: fix all violations automatically, no asking | `feedback_flake8_auto_fix.md` |
-| Never use `gh` CLI (not installed on Arch) | `feedback_no_gh_cli.md` |
-| Never create git tags | `git_tag_never.md` |
-| Unused GTK params: `_widget`, never `widget` | `feedback_widget_underscore.md` |
-| No numbered widget names (hbox1, vbox2, etc.) | `feedback_widget_naming.md` |
-| & in GTK markup → `&amp;` always | `feedback_gtk_markup_ampersand.md` |
-| Never `subprocess.call()` for terminal launches | `feedback_no_blocking_subprocess.md` |
-| Two-street logging: log_* always, debug_print only with --debug | `feedback_two_street_logging.md` |
-| Session end must include TODO.md update | `feedback_session_end_todo.md` |
-| End-of-session tips: always read best_practices.md first | `feedback_no_repeat_tips.md` |
+| Rule                                                            | File                                     |
+|-----------------------------------------------------------------|------------------------------------------|
+| Never edit without explicit confirmation                        | `feedback_no_changes_without_consent.md` |
+| Re-asking = implicit confirm, just implement                    | `feedback_confirm_re_ask.md`             |
+| After "go ahead", no mid-plan check-ins                         | `feedback_just_go_ahead.md`              |
+| git pull before every task, Claude owns all git ops             | `feedback_git_management.md`             |
+| Confirm → Claude edits, lints, commits, pushes                  | `feedback_user_commits.md`               |
+| flake8: fix all violations automatically, no asking             | `feedback_flake8_auto_fix.md`            |
+| Never use `gh` CLI (not installed on Arch)                      | `feedback_no_gh_cli.md`                  |
+| Never create git tags                                           | `git_tag_never.md`                       |
+| Unused GTK params: `_widget`, never `widget`                    | `feedback_widget_underscore.md`          |
+| No numbered widget names (hbox1, vbox2, etc.)                   | `feedback_widget_naming.md`              |
+| & in GTK markup → `&amp;` always                                | `feedback_gtk_markup_ampersand.md`       |
+| Never `subprocess.call()` for terminal launches                 | `feedback_no_blocking_subprocess.md`     |
+| Two-street logging: log_* always, debug_print only with --debug | `feedback_two_street_logging.md`         |
+| Session end must include TODO.md update                         | `feedback_session_end_todo.md`           |
+| End-of-session tips: always read best_practices.md first        | `feedback_no_repeat_tips.md`             |
 
 ---
 
@@ -186,13 +186,13 @@ These are the most important rules Claude follows in every session. Full details
 
 ## File Sources
 
-| File | Source |
-|------|--------|
-| `CLAUDE.md` | `~/.claude/CLAUDE.md` |
-| `settings.json` | `~/.claude/settings.json` (cleaned) |
-| `settings.local.json` | `~/.claude/settings.local.json` |
-| `hooks/flake8-hook.sh` | `~/.claude/flake8-hook.sh` |
-| `hooks/statusline.sh` | `~/.claude/statusline.sh` |
-| `best_practices.md` | `~/.claude/best_practices.md` (paths sanitized) |
-| `memory/*.md` | `EDU/archlinux-tweak-tool-gtk4/.claude/memory/` (universal subset) |
-| `templates/` | hand-distilled from ATT + alacritty-tweak-tool CLAUDE.md files |
+| File                   | Source                                                             |
+|------------------------|--------------------------------------------------------------------|
+| `CLAUDE.md`            | `~/.claude/CLAUDE.md`                                              |
+| `settings.json`        | `~/.claude/settings.json` (cleaned)                                |
+| `settings.local.json`  | `~/.claude/settings.local.json`                                    |
+| `hooks/flake8-hook.sh` | `~/.claude/flake8-hook.sh`                                         |
+| `hooks/statusline.sh`  | `~/.claude/statusline.sh`                                          |
+| `best_practices.md`    | `~/.claude/best_practices.md` (paths sanitized)                    |
+| `memory/*.md`          | `EDU/archlinux-tweak-tool-gtk4/.claude/memory/` (universal subset) |
+| `templates/`           | hand-distilled from ATT + alacritty-tweak-tool CLAUDE.md files     |

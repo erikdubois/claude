@@ -1,5 +1,37 @@
 # Claude Best Practices
 
+## 2026-05-20 (session end — Startup-HQ snapshot script)
+
+**Tip: For any machine-migration toolkit, build both directions at the same time — deploy (snapshot→machine) AND snapshot (machine→snapshot)**
+A deploy script without a snapshot script guarantees a stale migration. Every change you make on the running machine (new `.bin` script, updated SSH config, tweaked Claude hooks) diverges the live machine from the static snapshot. The deploy script is written once; the snapshot script needs to exist so you can refresh before moving. Build them as a pair: `create-new-hq.sh` (deploy) and `snapshot-to-hq.sh` (refresh). If one exists without the other, the toolkit is incomplete.
+
+**Tip: Use `rsync --filter='- */'` to copy only top-level files from a directory — excludes all subdirectories without naming them**
+`rsync -av --filter='- */' ~/EDU/ dst/EDU/` copies every file at the top level of `~/EDU/` but skips all subdirectories (git repos, project dirs, etc.). This is more maintainable than `--exclude=repo1/ --exclude=repo2/` because new repos you clone don't need to be added to the exclusion list — any directory is excluded automatically. Use it whenever you want to snapshot orchestration scripts at the root of a directory tree without pulling in large subdirs.
+
+## 2026-05-20 (session end — Startup-HQ tar.gz migration)
+
+**Tip: Archive bulk config directories as a single tarball for cloud-synced machine migration — never sync thousands of small files**
+A directory like `~/.claude` can contain 5 000+ individual files (session JSONs, history, cache). Syncing it via Insync/Google Drive generates thousands of separate API calls and can stall for minutes. For machine-transfer workflows (snapshot-then-deploy), replace the directory with `tar czf dir.tar.gz --exclude='dir/runtime_data' -C "$HOME" dir`. Insync then syncs one file — one API call, seconds instead of minutes. On the new machine: `tar xzf dir.tar.gz -C ~/`. The tradeoff is losing per-file diff visibility, which only matters for incremental sync — not for a one-shot setup.
+
+**Tip: When using `tar -C <root>` to create an archive, all `--exclude` paths must be relative to that root — not bare filenames**
+`tar czf out.tar.gz --exclude='history.jsonl' -C "$HOME" .claude` does NOT exclude `history.jsonl` — the exclude pattern is matched against paths as tar sees them, which start with `.claude/`. The correct form is `--exclude='.claude/history.jsonl'`. The same applies to directory excludes: `--exclude='.claude/sessions'` not `--exclude='sessions'`. Always prefix your excludes with the directory name you pass as the tar argument.
+
+## 2026-05-20 (session end — ATT Plasma one-way install)
+
+**Tip: In GTK4 `gui()` functions, guard utility functions that touch `self.*` with `hasattr` when they're called before all widgets are assigned**
+A utility like `update_button_state(self, fn)` called mid-way through `gui()` will crash with `AttributeError` if it references a `self.*` widget assigned later in the same function. The fix: `if hasattr(self, "button_uninstall"):` before any access — same pattern as the `d_combo` guard already common in ATT. Safe to call at any point in the build sequence and future-proofs the function against order changes. It is NOT a code smell — it is the GTK4-idiomatic way to handle initialization order in a single-pass `gui()` function.
+
+**Tip: Use `set_visible(False/True)` for conditional warning labels — construct once, toggle visibility per selection**
+When a label should appear only for specific dropdown selections, build it unconditionally in `gui()` with `set_visible(False)`, append it to the layout, then toggle `set_visible` in the selection-change handler. Never create/destroy the widget dynamically in a callback — that risks layout shifts and missed GTK size allocations. The widget exists for the lifetime of the page; only its visibility changes. This pattern scales to any "selection-dependent warning" and keeps all `self.*` attribute references consistent throughout the page's lifetime.
+
+## 2026-05-20 (session end — linux-kiro-lqx build automation)
+
+**Tip: Use `python3 -c` with an env var for JSON parsing in bash — avoids a `jq` dependency**
+When a bash script needs to extract values from a JSON API response, embed `python3 -c '...'` and pipe JSON through stdin. Pass context via environment variables (`CUR_MAJOR="$var" python3 -c '...'`) so the inline script can read `os.environ["CUR_MAJOR"]` safely. Python3 is always available (it's a kernel makedepend on Arch); `jq` is not. The inline script can sort by parsed version numbers, validate assumptions, and handle missing keys — all things `grep`/`sed`/`awk` do poorly on nested JSON. Keep it under ~20 lines; extract to a `.py` file if it grows larger.
+
+**Tip: Use a `.desktop` file with `Type=Link` for clickable URL shortcuts on Linux — not `.url`**
+`.url` files are a Windows format and work only in some Linux file managers. The cross-desktop XDG standard is a `.desktop` file: `[Desktop Entry]\nType=Link\nName=Label\nURL=https://...\nIcon=text-html`. Double-clicking it opens the URL in the default browser via `xdg-open`, and it's recognized by Thunar, Nautilus, PCManFM, Dolphin, and every other XDG-compliant file manager. This is the correct format for any "bookmark to a website" shortcut you want to live in a project directory.
+
 ## 2026-05-18 (session end — kiro-iso-next TODO housekeeping)
 
 **Tip: Display any list Claude will be asked to reference by number — use sequential numbers top to bottom, across all sections**
@@ -1365,3 +1397,11 @@ A hardcoded `echo "myscript version 1.2.3"` goes stale the moment the package is
 
 **Tip: Back up any file a third-party tool will overwrite before the tool runs, not after**
 Tools like `hblock`, `reflector`, or `grub-mkconfig` overwrite system files completely, discarding the user's customisations. The backup must happen before the tool runs — checking for an existing backup first so re-runs are idempotent: `if not os.path.exists("/etc/hosts-bak"): shutil.copy2("/etc/hosts", "/etc/hosts-bak")`. On removal, restore the backup then delete it. Doing the backup after the tool runs defeats the purpose: the original is already gone. Applies to any ATT feature that delegates a write to an external binary.
+
+## 2026-05-20 (ATT bug scan session)
+
+**Tip: Use Python for bulk multi-file text insertions — sed single-quote nesting is a trap**
+When you need to insert a line containing single quotes into 14 files (e.g. `trap 'error "..."' ERR`), sed quoting becomes a multi-escape nightmare: `sed -i '/pattern/a trap '"'"'error...'`. A 10-line Python script is cleaner, auditable, and handles any character without escaping: open each file, walk lines, append the target string after the match line, write back. The Python approach also lets you verify the insertion with `print(fname)` before touching the filesystem. Rule: if the string to insert contains single quotes, use Python.
+
+**Tip: When fixing a class of bug, immediately scan the whole codebase for the same pattern before moving on**
+Finding one `time.sleep()` after `process.wait()` or one missing `daemon=True` means the pattern likely exists elsewhere — it was copy-pasted or written during the same period with the same misunderstanding. Before closing the fix, run a targeted grep across all files: `grep -rn "time.sleep\|threading.Thread(" --include="*.py"`. If the first scan turns up 3 instances and you only fix 1, the other 2 will resurface as separate bugs later. Spend 2 minutes grepping; save 2 future sessions.

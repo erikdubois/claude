@@ -24,7 +24,7 @@ Erik — Arch Linux developer building Kiro, a full Arch-based Linux distro with
 - Don't introduce abstractions beyond what the task requires
 - Python: max line length 120; always run ruff check before considering any Python work done (don't ask permission, just run it)
 - Bash scripts: always start with `set -euo pipefail`
-- Bash scripts in `~/EDU/` and `~/KIRO/` repos follow the standard template modelled on `~/EDU/archlinux-tweak-tool-gtk4/up.sh` and `setup.sh`. Every new script must include, in order:
+- Bash scripts in `~/EDU/` and `~/KIRO/` repos follow the standard template modelled on `/home/erik/Insync/Kiro/Startup-HQ/up.sh` and `setup.sh` (canonical reference copies live in Startup-HQ, not att-gtk4). Every new script must include, in order:
   1. `#!/bin/bash` + `set -euo pipefail`
   2. Header block: `# Author : Erik Dubois` / `# Website : https://www.erikdubois.be` / `# DO NOT JUST RUN THIS. EXAMINE AND JUDGE. RUN AT YOUR OWN RISK.` wrapped in `#####` banner lines
   3. `SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"`
