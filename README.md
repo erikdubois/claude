@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="kiro.jpg" alt="Kiro" width="220" />
+</p>
+
 # Claude Code — Bootstrap Folder
 
 This folder contains everything needed to get Claude Code working efficiently on a new machine, with all accumulated preferences, feedback, and best practices already loaded.
