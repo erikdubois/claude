@@ -6,3 +6,5 @@ settings.local.json
 *.token
 *.secret
 *.pem
+.codex/
+.claude/
