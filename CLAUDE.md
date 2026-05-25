@@ -26,7 +26,7 @@ Erik — Arch Linux developer building Kiro, a full Arch-based Linux distro with
 - Bash scripts: always start with `set -euo pipefail`
 - Bash scripts in `~/EDU/` and `~/KIRO/` repos follow the standard template modelled on `/home/erik/Insync/Kiro/Startup-HQ/up.sh` and `setup.sh` (canonical reference copies live in Startup-HQ, not att-gtk4). Every new script must include, in order:
   1. `#!/bin/bash` + `set -euo pipefail`
-  2. Header block: `# Author : Erik Dubois` / `# Website : https://www.erikdubois.be` / `# DO NOT JUST RUN THIS. EXAMINE AND JUDGE. RUN AT YOUR OWN RISK.` wrapped in `#####` banner lines
+  2. Header block: `# Author : Erik Dubois` / `# Website : https://kiroproject.be` / `# DO NOT JUST RUN THIS. EXAMINE AND JUDGE. RUN AT YOUR OWN RISK.` wrapped in `#####` banner lines
   3. `SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"`
   4. Colors block — tput with silent fallback to empty strings when not a TTY (`RED GREEN YELLOW BLUE CYAN RESET`)
   5. Logging functions: `log_section` (green), `log_info` (blue), `log_warn` (yellow), `log_error` (red), `log_success` (green) — each prints a `############` banner around the message
